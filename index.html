@@ -2,7 +2,6 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <!-- PERUBAHAN: Optimasi viewport untuk HP -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Jadwal Kuliahku | Dashboard</title>
   <link rel="stylesheet" href="style.css" />
@@ -19,11 +18,12 @@
         <p>Sistem Manajemen & Pengingat</p>
       </div>
     </div>
-    <button id="btn-aktif-suara" class="btn-primary-glow">🔊 Aktifkan Suara</button>
+    <button id="btn-aktif-suara" class="btn-primary-glow">🔊 Aktifkan Suara & Notifikasi</button>
   </nav>
 
   <div class="dashboard-layout">
     <aside class="sidebar">
+      
       <!-- Pengaturan Suara -->
       <section class="panel-card">
         <h2 class="panel-title">🔔 Pengaturan Suara</h2>
@@ -32,6 +32,10 @@
           <input type="file" id="audio-input" accept="audio/*" class="file-input" />
         </div>
         <button id="btn-reset-audio" type="button" class="btn-ghost w-full mt-2">Gunakan Suara Default</button>
+        
+        <!-- TOMBOL TEST ALARM -->
+        <button id="btn-test-alarm" type="button" class="btn-primary w-full mt-2" style="background: #f59e0b; color: white;">🧪 Test Alarm 20 Menit</button>
+        
         <div id="audio-status" class="status-text"></div>
       </section>
 
@@ -55,7 +59,6 @@
             </div>
             <div class="form-group">
               <label>Semester</label>
-              <!-- PERUBAHAN: Tambah inputmode="numeric" -->
               <input type="number" id="semester" min="1" max="14" inputmode="numeric" required placeholder="4" />
             </div>
           </div>

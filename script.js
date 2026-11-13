@@ -23,6 +23,20 @@ if (typeof pdfjsLib !== 'undefined') {
 }
 
 // =====================================================
+// FIX 1: AUTO-UNLOCK AUDIO SAAT KLIK DI MANA SAJA
+// =====================================================
+// Browser memblokir suara jika belum ada interaksi. 
+// Kode ini memastikan setiap klik di layar akan "membangunkan" sistem suara.
+document.body.addEventListener('click', () => {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+});
+
+// =====================================================
 // 2. UTIL
 // =====================================================
 function loadData() {
@@ -91,16 +105,23 @@ function beepDefault() {
       o.connect(g); g.connect(audioCtx.destination); o.start(start); o.stop(start + dur);
     };
     const t = audioCtx.currentTime; playTone(880, t, 0.2); playTone(1100, t + 0.3, 0.2);
-  } catch (e) {}
+  } catch (e) { console.log('AudioContext error:', e); }
 }
+
 function playSingleSound() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
   if (customAudioObj) {
     customAudioObj.loop = false; customAudioObj.currentTime = 0;
     customAudioObj.play().catch(() => beepDefault());
   } else beepDefault();
 }
+
 function startRinging() {
-  if (isRinging) return; isRinging = true;
+  if (isRinging) return; 
+  isRinging = true;
+  
   if (customAudioObj) {
     customAudioObj.loop = true; customAudioObj.currentTime = 0;
     customAudioObj.play().catch(() => { ringInterval = setInterval(beepDefault, 1200); });
@@ -108,12 +129,15 @@ function startRinging() {
     ringInterval = setInterval(beepDefault, 1200);
   }
 }
+
 function stopRinging() {
-  if (!isRinging) return; isRinging = false;
+  if (!isRinging) return; 
+  isRinging = false;
   if (customAudioObj) { customAudioObj.pause(); customAudioObj.currentTime = 0; customAudioObj.loop = false; }
   if (ringInterval) { clearInterval(ringInterval); ringInterval = null; }
 }
 
+// Audio Upload & Reset
 document.getElementById('audio-input').addEventListener('change', (e) => {
   const file = e.target.files[0]; if (!file) return;
   const statusEl = document.getElementById('audio-status');
@@ -141,6 +165,34 @@ document.getElementById('btn-reset-audio').addEventListener('click', () => {
   localStorage.removeItem(AUDIO_STORAGE_KEY); customAudioSrc = null; customAudioObj = null;
   const statusEl = document.getElementById('audio-status');
   statusEl.textContent = '🔄 Menggunakan suara default.'; statusEl.style.color = '#6366f1';
+});
+
+// =====================================================
+// FIX 2: FITUR TEST ALARM 20 MENIT
+// =====================================================
+document.getElementById('btn-test-alarm').addEventListener('click', () => {
+  if (daftarMatkul.length === 0) {
+    alert('Silakan tambahkan 1 matkul terlebih dahulu untuk melakukan test.');
+    return;
+  }
+  
+  // Ambil matkul pertama sebagai contoh
+  const m = daftarMatkul[0];
+  peringatanAktifId = m.id;
+  
+  // Tampilkan banner
+  tampilkanBannerPeringatan(m);
+  
+  // Bunyikan suara
+  startRinging();
+  
+  // Coba tembakkan Notifikasi Browser
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification("⏰ Test Peringatan", {
+      body: `Matkul ${m.nama} akan segera dimulai! (Ini hanya test)`,
+      icon: "https://cdn-icons-png.flaticon.com/512/3233/3233pojok.png" // optional icon
+    });
+  }
 });
 
 // =====================================================
@@ -199,8 +251,7 @@ document.getElementById('btn-download').addEventListener('click', () => {
   const filterSem = document.getElementById('filter-semester-tampil').value;
   const dataToDownload = getFilteredData();
   if (dataToDownload.length === 0) { alert('Tidak ada data untuk diunduh.'); return; }
-  if (typeof XLSX === 'undefined') { alert('Library Excel belum siap.'); return; }
-
+  
   const excelData = dataToDownload.map(m => ({
     'Nama Mata Kuliah': m.nama, 'Hari': m.hari,
     'Jam Mulai': m.mulai || '-', 'Jam Selesai': m.selesai || '-',
@@ -532,7 +583,7 @@ document.getElementById('btn-reset').addEventListener('click', () => {
 });
 
 // =====================================================
-// 10. ALARM & BANNER
+// 10. ALARM & BANNER (OTOMATIS)
 // =====================================================
 function cekJadwal() {
   const hari = hariIni(); const tgl = todayKey(); const nowMin = timeToMinutes(nowHHMM());
@@ -541,6 +592,7 @@ function cekJadwal() {
   const akanMulai = daftarMatkul.find(m => {
     if (m.hari !== hari || !m.mulai) return false;
     const diff = timeToMinutes(m.mulai) - nowMin;
+    // Cek jika selisih antara 1 - 20 menit
     return diff <= 20 && diff > 0 && !(m.konfirmasi && m.konfirmasi['warn_' + tgl]);
   });
 
@@ -548,7 +600,14 @@ function cekJadwal() {
     if (!isRinging) {
       peringatanAktifId = akanMulai.id;
       tampilkanBannerPeringatan(akanMulai);
-      startRinging();
+      startRinging(); 
+      
+      // Tembak Notifikasi OS (Browser)
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("⏰ Peringatan 20 Menit", {
+          body: `Matkul ${akanMulai.nama} (${akanMulai.mulai}) akan segera dimulai!`,
+        });
+      }
     }
     return;
   }
@@ -617,14 +676,33 @@ function konfirmasiBanner(status) {
 }
 
 // =====================================================
-// 11. INIT
+// FIX 3: TOMBOL IZINKAN NOTIFIKASI & SUARA
 // =====================================================
 document.getElementById('btn-aktif-suara').addEventListener('click', () => {
+  // 1. Paksa hidupkan Audio Context
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
+  
+  // 2. Bunyikan suara sekali sebagai penanda sukses
   playSingleSound();
+
+  // 3. Minta izin Notifikasi OS (Browser)
+  if ("Notification" in window) {
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        alert("✅ Suara dan Notifikasi berhasil diaktifkan!");
+      } else {
+        alert("⚠️ Izin notifikasi ditolak. Pastikan untuk mengizinkannya di pengaturan browser.");
+      }
+    });
+  } else {
+    alert("✅ Suara diaktifkan! (Browser ini tidak mendukung notifikasi pop-up)");
+  }
 });
 
+// =====================================================
+// 11. INIT
+// =====================================================
 loadData();
 renderSemuaMatkul();
 cekJadwal();
