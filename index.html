@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jadwal Kuliahku | Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Parser PDF, DOCX, dan Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <!-- Top Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="logo-icon">📚</span>
+      <div>
+        <h1>Jadwal Kuliahku</h1>
+        <p>Sistem Manajemen & Pengingat</p>
+      </div>
+    </div>
+    <button id="btn-aktif-suara" class="btn-primary-glow">🔊 Aktifkan Suara</button>
+  </nav>
+
+  <!-- Main Layout (Grid 2 Kolom) -->
+  <div class="dashboard-layout">
+    
+    <!-- SIDEBAR (Kiri) -->
+    <aside class="sidebar">
+      
+      <!-- Pengaturan Suara -->
+      <section class="panel-card">
+        <h2 class="panel-title">🔔 Pengaturan Suara</h2>
+        <p class="hint">Upload file MP3/WAV (Maks 2MB).</p>
+        <div class="upload-zone">
+          <input type="file" id="audio-input" accept="audio/*" class="file-input" />
+        </div>
+        <button id="btn-reset-audio" type="button" class="btn-ghost w-full mt-2">Gunakan Suara Default</button>
+        <div id="audio-status" class="status-text"></div>
+      </section>
+
+      <!-- Form Tambah / Edit -->
+      <section class="panel-card">
+        <h2 id="form-title" class="panel-title">➕ Tambah Matkul</h2>
+        <form id="form-matkul">
+          <div class="form-group">
+            <label>Nama Matkul</label>
+            <input type="text" id="nama" required placeholder="Pemrograman Web" />
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Hari</label>
+              <select id="hari">
+                <option value="">-- Belum diatur --</option>
+                <option>Senin</option><option>Selasa</option><option>Rabu</option>
+                <option>Kamis</option><option>Jumat</option><option>Sabtu</option><option>Minggu</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Semester</label>
+              <input type="number" id="semester" min="1" max="14" required placeholder="4" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jam Mulai</label>
+              <input type="time" id="mulai" />
+            </div>
+            <div class="form-group">
+              <label>Jam Selesai</label>
+              <input type="time" id="selesai" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Kelas / Ruang</label>
+            <input type="text" id="kelas" placeholder="Lab 3" />
+          </div>
+          
+          <button type="submit" id="btn-submit-matkul" class="btn-primary w-full">Tambah Matkul</button>
+          <button type="button" id="btn-batal-edit" class="btn-ghost w-full mt-2 hidden">Batal Edit</button>
+        </form>
+      </section>
+
+      <!-- Upload File -->
+      <section class="panel-card">
+        <h2 class="panel-title">📥 Import File</h2>
+        <p class="hint">Format: <code>CSV, JSON, Excel, PDF, DOCX</code></p>
+        
+        <div class="form-group">
+          <label>Filter Semester Tujuan</label>
+          <select id="upload-semester">
+            <option value="">-- Semua Semester --</option>
+            <option>1</option><option>2</option><option>3</option>
+            <option>4</option><option>5</option><option>6</option>
+            <option>7</option><option>8</option><option>9</option>
+            <option>10</option><option>11</option><option>12</option>
+            <option>13</option><option>14</option>
+          </select>
+        </div>
+
+        <div class="upload-zone mt-2">
+          <input type="file" id="file-input" accept=".csv,.json,.txt,.pdf,.docx,.doc,.rtf,.xlsx,.xls" class="file-input" />
+        </div>
+        <div id="upload-status" class="status-text"></div>
+      </section>
+
+      <!-- Pencarian -->
+      <section class="panel-card">
+        <h2 class="panel-title">🔍 Pencarian Cepat</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Hari</label>
+            <select id="cari-hari">
+              <option value="">Semua</option>
+              <option>Senin</option><option>Selasa</option><option>Rabu</option>
+              <option>Kamis</option><option>Jumat</option><option>Sabtu</option><option>Minggu</option>
+              <option>Belum diatur</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Semester</label>
+            <input type="number" id="cari-semester" min="1" max="14" placeholder="Semua" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Jam</label>
+            <input type="time" id="cari-jam" />
+          </div>
+          <div class="form-group">
+            <label>Kelas</label>
+            <input type="text" id="cari-kelas" placeholder="misal Lab" />
+          </div>
+        </div>
+        <div class="form-row mt-2">
+          <button id="btn-cari" class="btn-primary w-full">Cari</button>
+          <button id="btn-reset" type="button" class="btn-ghost w-full">Reset</button>
+        </div>
+        <div id="hasil-cari" class="mt-2"></div>
+      </section>
+    </aside>
+
+    <!-- MAIN CONTENT (Kanan) -->
+    <main class="main-content">
+      
+      <!-- Sticky Header untuk List -->
+      <div class="list-header-sticky">
+        <div class="list-header-title">
+          <h2>📋 Daftar Semua Matkul</h2>
+          <span id="total-matkul-badge" class="badge-count">0 Matkul</span>
+        </div>
+        <div class="list-header-actions">
+          <select id="filter-semester-tampil" class="modern-select">
+            <option value="">Tampilkan: Semua Sem</option>
+            <option>1</option><option>2</option><option>3</option>
+            <option>4</option><option>5</option><option>6</option>
+            <option>7</option><option>8</option><option>9</option>
+            <option>10</option><option>11</option><option>12</option>
+            <option>13</option><option>14</option>
+          </select>
+          <button id="btn-download" class="btn-success">⬇️ Unduh Excel</button>
+        </div>
+      </div>
+
+      <div id="list-matkul" class="course-list"></div>
+      
+    </main>
+  </div>
+
+  <!-- Banner pengingat -->
+  <div id="banner" class="floating-banner hidden">
+    <div class="banner-content">
+      <strong id="banner-title">⏰ Pengingat Kuliah</strong>
+      <p id="banner-text"></p>
+    </div>
+    <div class="banner-actions">
+      <button id="banner-stop" class="btn-danger hidden">Matikan Suara 🔕</button>
+      <button id="banner-yes" class="btn-success hidden">Hadir ✅</button>
+      <button id="banner-no" class="btn-ghost hidden">Tidak ❌</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
