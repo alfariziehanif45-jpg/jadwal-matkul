@@ -22,11 +22,7 @@ if (typeof pdfjsLib !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-// =====================================================
 // FIX 1: AUTO-UNLOCK AUDIO SAAT KLIK DI MANA SAJA
-// =====================================================
-// Browser memblokir suara jika belum ada interaksi. 
-// Kode ini memastikan setiap klik di layar akan "membangunkan" sistem suara.
 document.body.addEventListener('click', () => {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -167,30 +163,25 @@ document.getElementById('btn-reset-audio').addEventListener('click', () => {
   statusEl.textContent = '🔄 Menggunakan suara default.'; statusEl.style.color = '#6366f1';
 });
 
-// =====================================================
-// FIX 2: FITUR TEST ALARM 20 MENIT
-// =====================================================
+// FITUR TEST ALARM 1 JAM
 document.getElementById('btn-test-alarm').addEventListener('click', () => {
   if (daftarMatkul.length === 0) {
     alert('Silakan tambahkan 1 matkul terlebih dahulu untuk melakukan test.');
     return;
   }
-  
-  // Ambil matkul pertama sebagai contoh
   const m = daftarMatkul[0];
   peringatanAktifId = m.id;
   
-  // Tampilkan banner
+  // Tampilkan banner peringatan 1 jam
   tampilkanBannerPeringatan(m);
   
   // Bunyikan suara
   startRinging();
   
-  // Coba tembakkan Notifikasi Browser
+  // Tembak Notifikasi OS
   if ("Notification" in window && Notification.permission === "granted") {
     new Notification("⏰ Test Peringatan", {
-      body: `Matkul ${m.nama} akan segera dimulai! (Ini hanya test)`,
-      icon: "https://cdn-icons-png.flaticon.com/512/3233/3233pojok.png" // optional icon
+      body: `Matkul ${m.nama} akan segera dimulai! (Ini hanya test)`
     });
   }
 });
@@ -583,17 +574,19 @@ document.getElementById('btn-reset').addEventListener('click', () => {
 });
 
 // =====================================================
-// 10. ALARM & BANNER (OTOMATIS)
+// 10. ALARM & BANNER (OTOMATIS 1 JAM SEBELUMNYA)
 // =====================================================
 function cekJadwal() {
   const hari = hariIni(); const tgl = todayKey(); const nowMin = timeToMinutes(nowHHMM());
 
-  // 1. 20 Menit Sebelum
+  // 1. Peringatan 1 Jam Sebelum (60 Menit)
   const akanMulai = daftarMatkul.find(m => {
     if (m.hari !== hari || !m.mulai) return false;
-    const diff = timeToMinutes(m.mulai) - nowMin;
-    // Cek jika selisih antara 1 - 20 menit
-    return diff <= 20 && diff > 0 && !(m.konfirmasi && m.konfirmasi['warn_' + tgl]);
+    const startMin = timeToMinutes(m.mulai);
+    const diff = startMin - nowMin;
+    
+    // Logika: Jika sisa waktu kurang dari/sama dengan 60 menit DAN belum masuk jam mulai (lebih dari 0 menit)
+    return diff <= 60 && diff > 0 && !(m.konfirmasi && m.konfirmasi['warn_' + tgl]);
   });
 
   if (akanMulai) {
@@ -604,8 +597,8 @@ function cekJadwal() {
       
       // Tembak Notifikasi OS (Browser)
       if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("⏰ Peringatan 20 Menit", {
-          body: `Matkul ${akanMulai.nama} (${akanMulai.mulai}) akan segera dimulai!`,
+        new Notification("⏰ Peringatan 1 Jam", {
+          body: `Matkul ${akanMulai.nama} (${akanMulai.mulai}) akan segera dimulai dalam 1 jam!`,
         });
       }
     }
@@ -628,7 +621,8 @@ function cekJadwal() {
 
 function tampilkanBannerPeringatan(m) {
   document.getElementById('banner-title').textContent = '⏰ Peringatan Kuliah';
-  document.getElementById('banner-text').innerHTML = `<b>20 Menit Lagi!</b> ${escapeHtml(m.nama)} (${m.mulai}, ${m.kelas}) segera dimulai.`;
+  // Mengubah teks dari "20 Menit Lagi!" menjadi "1 Jam Lagi!"
+  document.getElementById('banner-text').innerHTML = `<b>1 Jam Lagi!</b> ${escapeHtml(m.nama)} (${m.mulai}, ${m.kelas}) segera dimulai.`;
   document.getElementById('banner').classList.remove('hidden');
   document.getElementById('banner-yes').classList.add('hidden');
   document.getElementById('banner-no').classList.add('hidden');
@@ -676,33 +670,22 @@ function konfirmasiBanner(status) {
 }
 
 // =====================================================
-// FIX 3: TOMBOL IZINKAN NOTIFIKASI & SUARA
+// 11. INIT
 // =====================================================
 document.getElementById('btn-aktif-suara').addEventListener('click', () => {
-  // 1. Paksa hidupkan Audio Context
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
-  
-  // 2. Bunyikan suara sekali sebagai penanda sukses
   playSingleSound();
-
-  // 3. Minta izin Notifikasi OS (Browser)
+  
   if ("Notification" in window) {
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
         alert("✅ Suara dan Notifikasi berhasil diaktifkan!");
-      } else {
-        alert("⚠️ Izin notifikasi ditolak. Pastikan untuk mengizinkannya di pengaturan browser.");
       }
     });
-  } else {
-    alert("✅ Suara diaktifkan! (Browser ini tidak mendukung notifikasi pop-up)");
   }
 });
 
-// =====================================================
-// 11. INIT
-// =====================================================
 loadData();
 renderSemuaMatkul();
 cekJadwal();
