@@ -2,16 +2,15 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- PERUBAHAN: Optimasi viewport untuk HP -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Jadwal Kuliahku | Dashboard</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Parser PDF, DOCX, dan Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-  <!-- Top Navbar -->
   <nav class="navbar">
     <div class="nav-brand">
       <span class="logo-icon">📚</span>
@@ -23,12 +22,8 @@
     <button id="btn-aktif-suara" class="btn-primary-glow">🔊 Aktifkan Suara</button>
   </nav>
 
-  <!-- Main Layout (Grid 2 Kolom) -->
   <div class="dashboard-layout">
-    
-    <!-- SIDEBAR (Kiri) -->
     <aside class="sidebar">
-      
       <!-- Pengaturan Suara -->
       <section class="panel-card">
         <h2 class="panel-title">🔔 Pengaturan Suara</h2>
@@ -60,7 +55,8 @@
             </div>
             <div class="form-group">
               <label>Semester</label>
-              <input type="number" id="semester" min="1" max="14" required placeholder="4" />
+              <!-- PERUBAHAN: Tambah inputmode="numeric" -->
+              <input type="number" id="semester" min="1" max="14" inputmode="numeric" required placeholder="4" />
             </div>
           </div>
 
@@ -89,19 +85,16 @@
       <section class="panel-card">
         <h2 class="panel-title">📥 Import File</h2>
         <p class="hint">Format: <code>CSV, JSON, Excel, PDF, DOCX</code></p>
-        
         <div class="form-group">
           <label>Filter Semester Tujuan</label>
           <select id="upload-semester">
             <option value="">-- Semua Semester --</option>
-            <option>1</option><option>2</option><option>3</option>
-            <option>4</option><option>5</option><option>6</option>
-            <option>7</option><option>8</option><option>9</option>
-            <option>10</option><option>11</option><option>12</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option><option>7</option><option>8</option>
+            <option>9</option><option>10</option><option>11</option><option>12</option>
             <option>13</option><option>14</option>
           </select>
         </div>
-
         <div class="upload-zone mt-2">
           <input type="file" id="file-input" accept=".csv,.json,.txt,.pdf,.docx,.doc,.rtf,.xlsx,.xls" class="file-input" />
         </div>
@@ -123,7 +116,7 @@
           </div>
           <div class="form-group">
             <label>Semester</label>
-            <input type="number" id="cari-semester" min="1" max="14" placeholder="Semua" />
+            <input type="number" id="cari-semester" min="1" max="14" inputmode="numeric" placeholder="Semua" />
           </div>
         </div>
         <div class="form-row">
@@ -144,22 +137,18 @@
       </section>
     </aside>
 
-    <!-- MAIN CONTENT (Kanan) -->
     <main class="main-content">
-      
-      <!-- Sticky Header untuk List -->
       <div class="list-header-sticky">
         <div class="list-header-title">
-          <h2>📋 Daftar Semua Matkul</h2>
+          <h2>📋 Daftar Matkul</h2>
           <span id="total-matkul-badge" class="badge-count">0 Matkul</span>
         </div>
         <div class="list-header-actions">
           <select id="filter-semester-tampil" class="modern-select">
             <option value="">Tampilkan: Semua Sem</option>
-            <option>1</option><option>2</option><option>3</option>
-            <option>4</option><option>5</option><option>6</option>
-            <option>7</option><option>8</option><option>9</option>
-            <option>10</option><option>11</option><option>12</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option><option>7</option><option>8</option>
+            <option>9</option><option>10</option><option>11</option><option>12</option>
             <option>13</option><option>14</option>
           </select>
           <button id="btn-download" class="btn-success">⬇️ Unduh Excel</button>
@@ -167,11 +156,9 @@
       </div>
 
       <div id="list-matkul" class="course-list"></div>
-      
     </main>
   </div>
 
-  <!-- Banner pengingat -->
   <div id="banner" class="floating-banner hidden">
     <div class="banner-content">
       <strong id="banner-title">⏰ Pengingat Kuliah</strong>
